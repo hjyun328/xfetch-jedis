@@ -47,7 +47,7 @@ public class XFetcher extends FetcherBase {
 
             if (gap >= expiry) {
                 System.out.printf("[%d] Early recompute! (Rand=%f, Exp=%f, Delta=%dms, Gap=%fms, Expiry=%dms)\n",
-                    Thread.currentThread().getId(), rand, exponential, delta, gap, expiry);
+                    Thread.currentThread().getId(), rand, Math.abs(exponential), delta, gap, expiry);
                 fetchResult = FetchResult.EARLY;
             } else {
                 fetchResult = FetchResult.HIT;
