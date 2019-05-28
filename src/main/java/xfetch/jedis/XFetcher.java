@@ -42,11 +42,12 @@ public class XFetcher extends FetcherBase {
             long delta = Long.valueOf(deltaStr);    // milliseconds
             double rand = new BigDecimal(Math.random()).setScale(xFetchRandPrecision, BigDecimal.ROUND_CEILING).doubleValue();
             long expiry = (long) ret.get(1) * 1000; // milliseconds
-            double log = Math.log(rand);
-            double gap = -1 * delta * xFetchBeta * log;
+            double exponential = Math.log(rand);
+            double gap = -1 * delta * xFetchBeta * exponential;
 
             if (gap >= expiry) {
-                System.out.printf("[%d] Early recompute! (Rand=%f, Delta=%dms, Gap=%fms, Expiry=%dms)\n", Thread.currentThread().getId(), rand, delta, gap, expiry);
+                System.out.printf("[%d] Early recompute! (Rand=%f, Exp=%f, Delta=%dms, Gap=%fms, Expiry=%dms)\n",
+                    Thread.currentThread().getId(), rand, exponential, delta, gap, expiry);
                 fetchResult = FetchResult.EARLY;
             } else {
                 fetchResult = FetchResult.HIT;
