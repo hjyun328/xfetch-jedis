@@ -36,18 +36,23 @@ public class XFetcher extends FetcherBase {
         String data = ((List<String>) ret.get(0)).get(0);
         String deltaStr = ((List<String>) ret.get(0)).get(1);
 
+        long delta = 0;
+        double rand = 0;
+        long expiry = 0;
+        double exponential = 0;
+        double gap = 0;
+
+
         if (data == null || deltaStr == null) {
             fetchResult = FetchResult.MISS;
         } else {
-            long delta = Long.valueOf(deltaStr);    // milliseconds
-            double rand = new BigDecimal(Math.random()).setScale(xFetchRandPrecision, BigDecimal.ROUND_CEILING).doubleValue();
-            long expiry = (long) ret.get(1) * 1000; // milliseconds
-            double exponential = Math.log(rand);
-            double gap = -1 * delta * xFetchBeta * exponential;
+            delta = Long.valueOf(deltaStr);    // milliseconds
+            rand = new BigDecimal(Math.random()).setScale(xFetchRandPrecision, BigDecimal.ROUND_CEILING).doubleValue();
+            expiry = (long) ret.get(1) * 1000; // milliseconds
+            exponential = Math.log(rand);
+            gap = -1 * delta * xFetchBeta * exponential;
 
             if (gap >= expiry) {
-                System.out.printf("[%d] Early recompute! (Rand=%f, Exp=%f, Delta=%dms, Gap=%fms, Expiry=%dms)\n",
-                    Thread.currentThread().getId(), rand, Math.abs(exponential), delta, gap, expiry);
                 fetchResult = FetchResult.EARLY;
             } else {
                 fetchResult = FetchResult.HIT;
@@ -57,6 +62,11 @@ public class XFetcher extends FetcherBase {
         }
 
         deltaStr = String.valueOf(recomputer.recompute());
+
+        if (fetchResult == FetchResult.EARLY) {
+            System.out.printf("[%d] Early recompute! (Rand=%f, Exp=%f, Delta=%dms, Gap=%fms, Expiry=%dms)\n",
+                Thread.currentThread().getId(), rand, Math.abs(exponential), delta, gap, expiry);
+        }
 
         jedis.eval(SET_SCRIPT, 2, Env.DATA_KEY, Env.DELTA_KEY, Env.DATA, deltaStr, String.valueOf(Env.TTL_S));
         jedis.close();
